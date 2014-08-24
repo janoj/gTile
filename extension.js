@@ -628,6 +628,10 @@ function isPrimaryMonitor(monitor)
     return Main.layoutManager.primaryMonitor.x == monitor.x;
 }
 
+function getWorkspaceAvailableWidth(monitor) {
+    return global.screen.get_active_workspace().get_work_area_for_monitor(monitor.index).width;
+}
+
 /*****************************************************************
                             PROTOTYPES
 *****************************************************************/
@@ -807,13 +811,17 @@ AutoTileMainAndList.prototype = {
         reset_window(focusMetaWindow);
         
         let monitor = this.grid.monitor;
+
+        let availableWidth = getWorkspaceAvailableWidth(monitor);
+
+        let offsetX = monitor.width - availableWidth;
         let offsetY = (isPrimaryMonitor(monitor)) ? Main.panel.actor.height : 0;
 
         
         let windows = getNotFocusedWindowsOfMonitor(monitor);
-        
-        move_resize_window(focusMetaWindow,monitor.x,monitor.y+offsetY,monitor.width/2,monitor.height);
-        
+
+        move_resize_window(focusMetaWindow,monitor.x+offsetX,monitor.y+offsetY,availableWidth/2,monitor.height);
+
         let winHeight = (monitor.height - offsetY)/(windows.length );
         let countWin = 0;
 
@@ -829,8 +837,8 @@ AutoTileMainAndList.prototype = {
             let newOffset = offsetY + (countWin * winHeight);
             //global.log("newOffset: "+ newOffset);
             reset_window(metaWindow);
-            
-            move_resize_window(metaWindow,monitor.x+monitor.width/2,newOffset,monitor.width/2,winHeight);
+
+            move_resize_window(metaWindow,monitor.x+offsetX+(availableWidth/2),newOffset,availableWidth/2,winHeight);
             countWin++;
         }
         
@@ -865,19 +873,24 @@ AutoTileTwoList.prototype = {
         reset_window(focusMetaWindow);
         
         let monitor = this.grid.monitor;
+
+        let availableWidth = getWorkspaceAvailableWidth(monitor);
+
+        let offsetX = monitor.width - availableWidth;
         let offsetY = (isPrimaryMonitor(monitor)) ? Main.panel.actor.height : 0;
         
         let windows = getNotFocusedWindowsOfMonitor(monitor);//getWindowsOfMonitor(monitor);
         let nbWindowOnEachSide = Math.ceil((windows.length + 1) / 2);
         let winHeight = (monitor.height - offsetY)/nbWindowOnEachSide;
-        
+        let winWidth = availableWidth/2;
+
         let countWin = 0;
-        
-        let xOffset = countWin%2 * monitor.width/2;
+
+        let xOffset = offsetX + countWin%2 * winWidth;
         let yOffset = offsetY + (Math.floor(countWin/2) * winHeight);
-        
-        move_resize_window(focusMetaWindow,monitor.x+xOffset,monitor.y+yOffset,monitor.width/2,winHeight);
-        
+
+        move_resize_window(focusMetaWindow,monitor.x+xOffset,monitor.y+yOffset,winWidth,winHeight);
+
         countWin++;
     
         for(let windowIdx in windows)
@@ -886,13 +899,13 @@ AutoTileTwoList.prototype = {
             /*let wm_type = metaWindow.get_window_type();
             let layer = metaWindow.get_layer();
             global.log(metaWindow.get_title()+" "+wm_type+" "+layer);*/
-            
-            xOffset = countWin%2 * monitor.width/2;
+
+            xOffset = offsetX + countWin%2 * winWidth;
             yOffset = offsetY + (Math.floor(countWin/2) * winHeight);
             
             reset_window(metaWindow);
-            
-            move_resize_window(metaWindow,monitor.x+xOffset,monitor.y+yOffset,monitor.width/2,winHeight);
+
+            move_resize_window(metaWindow,monitor.x+xOffset,monitor.y+yOffset,winWidth,winHeight);
             countWin++;
         }
         
@@ -1426,12 +1439,15 @@ GridElementDelegate.prototype = {
 	    [minX,maxX,minY,maxY] = this._getVarFromGridElement(fromGridElement,toGridElement);
 	   
 	    let monitor = fromGridElement.monitor;
-	    
+
+	    let availableWidth = getWorkspaceAvailableWidth(monitor);
+
+	    let offsetX = monitor.width - availableWidth;
 	    let offsetY = (isPrimaryMonitor(monitor)) ? Main.panel.actor.height : 0;
-	    
-	    let areaWidth = (monitor.width/nbCols)*((maxX-minX)+1);
+
+	    let areaWidth = (availableWidth/nbCols)*((maxX-minX)+1);
 		let areaHeight = ((monitor.height-offsetY)/nbRows)*((maxY-minY)+1);
-		let areaX = monitor.x + (minX*(monitor.width/nbCols));
+		let areaX = monitor.x + offsetX + (minX*(availableWidth/nbCols));
 		let areaY = offsetY+monitor.y + (minY*((monitor.height-offsetY)/nbRows));
 		
 		return [areaX,areaY,areaWidth,areaHeight];
