@@ -838,7 +838,7 @@ AutoTileMainAndList.prototype = {
             //global.log("newOffset: "+ newOffset);
             reset_window(metaWindow);
 
-            move_resize_window(metaWindow,monitor.x+offsetX+(availableWidth/2),newOffset,availableWidth/2,winHeight);
+            move_resize_window(metaWindow,monitor.x+offsetX+(availableWidth/2),monitor.y+newOffset,availableWidth/2,winHeight);
             countWin++;
         }
         
